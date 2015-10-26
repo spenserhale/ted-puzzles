@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Birdge Riddle</title>
+</head>
+<body>
+
+<div id="results"></div>
+
+<script type="text/javascript">
+
+    function printMessage ($message) {
+
+        document.getElementById('results').innerHTML += "<p>" + $message + "</p>";
+    }
+
+    function printDebug ($message) {
+
+        document.getElementById('results').innerHTML += "<pre>" + $message + "</pre>";
+    }
+
+    var GAME = GAME || {};
+
+    GAME.time = {
+
+        limit: 17,
+        total: 0,
+
+        add: function(number) {
+            this.total += number;
+        },
+
+        isPastLimit: function() {
+            return ( this.total >= this.limit )
+        }
+
+    };
+
+    GAME.Person = function(name, speed) {
+
+        this.name = name;
+        this.speed = speed;
+
+        return this;
+    };
+
+    GAME.Bridge = function(peopleInDanger, peopleInSafety) {
+
+        this.peopleInDanger = null;
+        this.peopleInSafety = null;
+        this.limit = 2;
+
+        public function __construct($peopleInDanger, $peopleInSafety)
+    {
+        $this->peopleInDanger = $peopleInDanger;
+        $this->peopleInSafety = $peopleInSafety;
+    }
+
+        public function cross(array $people, $direction) {
+
+        printMessage('Cross');
+
+        switch ( $direction ) {
+        case 'toSafety':
+
+            printMessage('toSafety');
+
+            foreach($people as $person) {
+
+                printMessage('Person: ' . $person->name);
+
+                $this->peopleInSafety[$person->name] = $person;
+                unset($this->peopleInDanger[$person->name]);
+                $time[] = $person->time;
+                $peopleName[] = $person->name;
+            }
+
+            global $Game;
+            $Game->time->add( max( $time ) );
+
+            printMessage( implode(' and ', $peopleName) . ' moved to Safety taking ' . max( $time ) );
+
+            break;
+
+        case 'toDanger':
+
+            printMessage('toDanger');
+
+            foreach($people as $person) {
+
+                printMessage('Person: ' . $person->name);
+
+                $this->peopleInDanger[$person->name] = $person;
+                unset($this->peopleInSafety[$person->name]);
+                $time[] = $person->time;
+                $peopleName[] = $person->name;
+            }
+
+            global $Game;
+            $Game->time->add( max( $time ) );
+
+            printMessage( implode(' and ', $peopleName) . ' moved to Safety taking ' . max( $time )  );
+
+            break;
+        }
+    }
+    }
+
+    class Game {
+
+        bridge: null,
+        public $directions = ['toSafety', 'toDanger'];
+        direction: null,
+        public $sides = ['safety', 'danger'];
+        side: null,
+        selection: null,
+        time: null,
+        public $status = 'inProgress';
+
+        public function __construct() {
+
+        $this->time = new Time;
+
+        $inDanger = [];
+        $inSafety = [];
+
+        $you = new Person('You', 1);
+        $inDanger[$you->name] = $you;
+
+        $assistant = new Person('Assistant', 2);
+        $inDanger[$assistant->name] = $assistant;
+
+        $janitor = new Person('Janitor', 5);
+        $inDanger[$janitor->name] = $janitor;
+
+        $professor = new Person('Professor', 10);
+        $inDanger[$professor->name] = $professor;
+
+        $this->bridge = new Bridge($inDanger, $inSafety);
+
+        printMessage('Game Constructed');
+
+    }
+
+        public function getRandomPeopleFromDanger () {
+
+        printMessage( 'getRandomPeopleFromDanger' );
+
+        do {
+
+            printMessage( 'getRandomPeopleFromDanger - while' );
+
+            $selection = [];
+            $selection[] = $this->bridge->peopleInDanger[ array_rand($this->bridge->peopleInDanger, 1) ];
+            $selection[] = $this->bridge->peopleInDanger[ array_rand($this->bridge->peopleInDanger, 1) ];
+
+            printDebug( var_export($selection));
+
+        } while ( $selection[0] === $selection[1] );
+
+        printMessage( 'getRandomPeopleFromDanger - pass' );
+
+        return $selection;
+    }
+
+        public function runRobot() {
+
+        printMessage( 'Game Started' );
+
+        $try = 1;
+
+        while( $this->status === 'inProgress' )
+        {
+            printMessage( 'Try ' . $try );
+            $try++;
+
+            //Get Random Group
+            $this->selection = $this->getRandomPeopleFromDanger();
+
+            //Cross
+            $this->bridge->cross($this->selection, 'toSafety');
+
+            //Send one back
+            $this->selection = [];
+            $this->selection[] = $this->bridge->peopleInSafety[ array_rand($this->bridge->peopleInSafety) ];
+            $this->bridge->cross($this->selection, 'toDanger');
+
+            if( $this->time->isPastLimit() ) {
+
+                $this->status = 'Game Lost';
+                printMessage( $this->status );
+                return false;
+
+            } elseif( empty ($this->bridge->peopleInDanger) ) {
+
+            $this->status = 'Game Won';
+            printMessage( $this->status );
+            return true;
+        }
+        }
+
+        switch($this->status) {
+            case 'Game Lost':
+                printMessage( $this->status );
+                return false;
+                break;
+
+            case 'Game Won':
+                printMessage( $this->status );
+                return true;
+                break;
+
+            default:
+                return false;
+        }
+    }
+    }
+
+    $Game = new Game();
+    $game_won = false;
+
+    while( ! $game_won) {
+        $game_won = $Game->runRobot();
+    }
+
+</script>
+
+</body>
+</html>
